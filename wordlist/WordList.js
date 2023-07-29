@@ -85,11 +85,12 @@ const WordList = () => {
         </View>
       ) : (
         <FlatList
-          data={dataList}
-          renderItem={renderItem}
-          keyExtractor={item => item.word}
-          contentContainerStyle={styles.list}
-        />
+  data={dataList}
+  renderItem={renderItem}
+  keyExtractor={(item, index) => `${item.word}-${index}`}
+  contentContainerStyle={styles.list}
+/>
+
       )}
     </View>
   );
