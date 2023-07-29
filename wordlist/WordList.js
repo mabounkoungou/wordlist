@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, Text, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import {
+  View,
+  FlatList,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  RefreshControl,
+  Appearance,
+} from 'react-native';
 import axios from 'axios';
 
 const API_URLS = [
@@ -17,8 +27,23 @@ const WordList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const [greeting, setGreeting] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const [theme, setTheme] = useState(Appearance.getColorScheme() || 'light');
 
   useEffect(() => {
+    
+    const currentHour = new Date().getHours();
+
+    
+    if (currentHour >= 5 && currentHour < 12) {
+      setGreeting('Good morning');
+    } else if (currentHour >= 12 && currentHour < 18) {
+      setGreeting('Good afternoon');
+    } else {
+      setGreeting('Good evening');
+    }
+
     fetchData();
   }, []);
 
@@ -29,9 +54,11 @@ const WordList = () => {
       const sortedData = combinedData.sort((a, b) => a.word.localeCompare(b.word));
       setDataList(sortedData);
       setLoading(false);
+      setRefreshing(false); 
     } catch (error) {
       setError('Error fetching data. Please try again later.');
       setLoading(false);
+      setRefreshing(false); 
     }
   };
 
@@ -47,6 +74,16 @@ const WordList = () => {
     }
   };
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+  };
+
   const renderItem = ({ item, index }) => {
     const highlightStyle = item.word.toLowerCase().includes(searchText.toLowerCase())
       ? { color: 'green' }
@@ -54,14 +91,15 @@ const WordList = () => {
 
     return (
       <View style={styles.itemContainer}>
-        <Text style={styles.itemNumber}>{index + 1}.</Text>
-        <Text style={[styles.itemText, highlightStyle]}>{item.word}</Text>
+        <Text style={[styles.itemNumber, { color: theme === 'dark' ? 'white' : 'black' }]}>{index + 1}.</Text>
+        <Text style={[styles.itemText, highlightStyle, { color: theme === 'dark' ? 'white' : 'black' }]}>{item.word}</Text>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, theme === 'dark' && styles.darkContainer]}>
+      <Text style={[styles.greetingText, { color: theme === 'dark' ? 'white' : 'black' }]}>{greeting}</Text>
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -73,7 +111,16 @@ const WordList = () => {
           <Text style={styles.searchButtonText}>Search</Text>
         </TouchableOpacity>
       </View>
-      {loading ? (
+      <FlatList
+        data={dataList}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => `${item.word}-${index}`}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
+      {loading && !refreshing ? (
         <ActivityIndicator size="large" color="#000" />
       ) : error ? (
         <View style={styles.notFoundContainer}>
@@ -83,15 +130,12 @@ const WordList = () => {
         <View style={styles.notFoundContainer}>
           <Text style={styles.notFoundText}>Word not found</Text>
         </View>
-      ) : (
-        <FlatList
-  data={dataList}
-  renderItem={renderItem}
-  keyExtractor={(item, index) => `${item.word}-${index}`}
-  contentContainerStyle={styles.list}
-/>
-
-      )}
+      ) : null}
+      <TouchableOpacity style={styles.themeButton} onPress={toggleTheme}>
+        <Text style={styles.themeButtonText}>
+          Switch to {theme === 'light' ? 'Dark' : 'Light'} Mode
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -100,6 +144,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  darkContainer: {
+    backgroundColor: '#121212',
   },
   list: {
     paddingBottom: 16,
@@ -141,7 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   searchButton: {
-    backgroundColor: '#1e90ff',
+    backgroundColor: 'green',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -160,6 +207,25 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: 'red',
+  },
+  greetingText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeButton: {
+    backgroundColor: 'green',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  themeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
