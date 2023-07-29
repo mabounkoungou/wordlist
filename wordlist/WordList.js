@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  FlatList,
-  Text,
-  ActivityIndicator,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  RefreshControl,
-  Appearance,
-} from 'react-native';
+import {View,FlatList,Text,ActivityIndicator,StyleSheet,TextInput,TouchableOpacity,RefreshControl,Appearance,} from 'react-native';
 import axios from 'axios';
 
 const API_URLS = [
@@ -37,7 +27,7 @@ const WordList = () => {
 
     
     if (currentHour >= 5 && currentHour < 12) {
-      setGreeting('Good morning');
+      setGreeting('Good morning'); //when morning
     } else if (currentHour >= 12 && currentHour < 18) {
       setGreeting('Good afternoon');
     } else {
